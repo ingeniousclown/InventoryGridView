@@ -428,8 +428,9 @@ function InventoryGridView_ToggleGrid(self, toggle)
     end
 
     ZO_ScrollList_RefreshVisible(self)
-    return
+    ReshapeSlots(self)
 end
+
 -- InventoryGridView_ToggleOutlines(ZO_PlayerInventoryBackpack, true)
 function InventoryGridView_ToggleOutlines(self, toggle)
     self.isOutlines = toggle

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------
 --InventoryGridView.lua
 --Author: ingeniousclown
---v1.0.2
+--v1.0.2b
 
 --InventoryGridView was designed to try and leverage the default
 --UI as much as possible to create a grid view.  The result is
@@ -41,10 +41,14 @@ local function AddButton(parentWindow, inventoryId)
 end
 
 local function AddGold(rowControl)
+    if(not rowControl.dataEntry) then return end
     local bagId = rowControl.dataEntry.data.bagId
     local slotIndex = rowControl.dataEntry.data.slotIndex
     local _, stack, sellPrice = GetItemInfo(bagId, slotIndex)
-    ZO_ItemTooltip_AddMoney(ItemTooltip, sellPrice * stack)
+
+    if(stack * sellPrice > 0) then
+        ZO_ItemTooltip_AddMoney(ItemTooltip, sellPrice * stack)
+    end
 end
 
 local function AddGoldSoon(rowControl)
