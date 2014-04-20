@@ -8,6 +8,19 @@ local BAGS = ZO_PlayerInventoryBackpack
 local BANK = ZO_PlayerBankBackpack
 local GUILD_BANK = ZO_GuildBankBackpack
 
+local QUALITY_OPTIONS = {
+	"Trash", "Normal", "Magic", "Arcane", "Artifact", "Legendary"
+}
+
+local QUALITY = {
+	["Trash"] = ITEM_QUALITY_TRASH,
+	["Normal"] = ITEM_QUALITY_NORMAL,
+	["Magic"] = ITEM_QUALITY_MAGIC,
+	["Arcane"] = ITEM_QUALITY_ARCANE,
+	["Artifact"] = ITEM_QUALITY_ARTIFACT,
+	["Legendary"] = ITEM_QUALITY_LEGENDARY
+}
+ 
 --LAM extension
 local function LAMAddExample(panelID, controlName, ctTexture, maxHeight, sliderToBind, updateFunction, warning, warningText)
 	local example = WINDOW_MANAGER:CreateControl(controlName, ZO_OptionsWindowSettingsScrollChild, CT_CONTROL)
@@ -63,11 +76,13 @@ function InventoryGridViewSettings:Initialize()
         isBankGrid = true,
         isGuildBankGrid = true,
         allowRarityColor = true,
-        gridSize = 52
+        gridSize = 52,
+        minimumQuality = "Trash"
     }
 
     settings = ZO_SavedVars:New("InventoryGridView_Settings", 1, nil, defaults)
     self:CreateOptionsMenu()
+	InventoryGridView_SetMinimumQuality(QUALITY[settings.minimumQuality])
 end
 
 function InventoryGridViewSettings:IsGrid( inventoryId )
@@ -108,6 +123,13 @@ function InventoryGridViewSettings:CreateOptionsMenu()
 						InventoryGridView_ToggleOutlines(BAGS, settings.allowRarityColor)
 						InventoryGridView_ToggleOutlines(BANK, settings.allowRarityColor)
 						InventoryGridView_ToggleOutlines(GUILD_BANK, settings.allowRarityColor)
+					end)
+	LAM:AddDropdown(panel, "IGV_Min_Rarity_Dropdown", "Minimum outline quality", "Don't show outlines under this quality",
+					QUALITY_OPTIONS,
+					function() return settings.minimumQuality end,	--getFunc
+					function(value)							--setFunc
+						settings.minimumQuality = value
+						InventoryGridView_SetMinimumQuality(QUALITY[value], true)
 					end)
 	local slider = LAM:AddSlider(panel, "IGV_Grid_Size", "Grid size", "Set how big or small the grid icons are.", 24, 96, 4,
 					function() return settings.gridSize end,

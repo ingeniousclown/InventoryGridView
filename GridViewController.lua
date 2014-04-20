@@ -15,6 +15,8 @@ local GRID_SLOT_HOVER = "InventoryGridView/assets/griditem_hover.dds"
 local LIST_SLOT_HOVER = [[EsoUI/Art/Miscellaneous/listitem_highlight.dds]]
 local ICON_MULT = 0.77
 
+local minimumQuality = ITEM_QUALITY_TRASH
+
 -------------------------
 --my own util functions
 -------------------------
@@ -34,7 +36,12 @@ local function AddColor(control)
     local _, _, _, _, _, _, _, quality = GetItemInfo(bagId, slotIndex)
     local r, g, b = GetInterfaceColor(INTERFACE_COLOR_TYPE_ITEM_QUALITY_COLORS, quality)
 
-    control:GetNamedChild("Bg"):SetColor(r, g, b, 1)
+    local alpha = 1
+    if(quality < minimumQuality) then
+        alpha = 0
+    end
+
+    control:GetNamedChild("Bg"):SetColor(r, g, b, alpha)
     control:GetNamedChild("Highlight"):SetColor(r, g, b, 0)
 end
 
@@ -420,6 +427,7 @@ function InventoryGridView_ToggleGrid(self, toggle)
         ResizeScrollBar(self, (#self.data * self.controlHeight) - ZO_ScrollList_GetHeight(self))
     end
 
+    ZO_ScrollList_RefreshVisible(self)
     return
 end
 -- InventoryGridView_ToggleOutlines(ZO_PlayerInventoryBackpack, true)
@@ -443,8 +451,14 @@ function InventoryGridView_ToggleOutlines(self, toggle)
     ReshapeSlots(self)
 end
 
-function InventoryGridView_ForceUpdate(self)
-
+function InventoryGridView_SetMinimumQuality(quality, forceUpdate)
+    minimumQuality = quality
+    ZO_PlayerInventoryBackpack.forceUpdate = forceUpdate or false
+    ZO_PlayerBankBackpack.forceUpdate = forceUpdate or false
+    ZO_GuildBankBackpack.forceUpdate = forceUpdate or false
+    ReshapeSlots(ZO_PlayerInventoryBackpack)
+    ReshapeSlots(ZO_PlayerBankBackpack)
+    ReshapeSlots(ZO_GuildBankBackpack)
 end
 
 --hook function!  to be called before "ZO_ScrollList_UpdateScroll"

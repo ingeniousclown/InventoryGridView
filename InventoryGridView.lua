@@ -1,7 +1,7 @@
 ------------------------------------------------------------------
 --InventoryGridView.lua
 --Author: ingeniousclown
---v1.0.1
+--v1.0.2
 
 --InventoryGridView was designed to try and leverage the default
 --UI as much as possible to create a grid view.  The result is
@@ -38,6 +38,19 @@ local function AddButton(parentWindow, inventoryId)
     texture:SetAnchorFill()
     texture:SetTexture(GRID_VIEW_BUTTON_TEXTURE)
     -- texture:SetColor(1, 1, 1, 1)
+end
+
+local function AddGold(rowControl)
+    local bagId = rowControl.dataEntry.data.bagId
+    local slotIndex = rowControl.dataEntry.data.slotIndex
+    local _, stack, sellPrice = GetItemInfo(bagId, slotIndex)
+    ZO_ItemTooltip_AddMoney(ItemTooltip, sellPrice * stack)
+end
+
+local function AddGoldSoon(rowControl)
+    if(rowControl.isGrid) then
+        zo_callLater(function() AddGold(rowControl) end, 50)
+    end
 end
 
 local function InventoryGridViewLoaded(eventCode, addOnName)
@@ -100,6 +113,8 @@ local function InventoryGridViewLoaded(eventCode, addOnName)
     AddButton(ZO_PlayerInventory, BAGS.bagId)
     AddButton(ZO_PlayerBank, BANK.bagId)
     AddButton(ZO_GuildBank, GUILD_BANK.bagId)    
+
+    ZO_PreHook("ZO_InventorySlot_OnMouseEnter", AddGoldSoon)
 end
 
 --initialize
