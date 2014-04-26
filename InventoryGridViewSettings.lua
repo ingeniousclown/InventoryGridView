@@ -8,6 +8,21 @@ local BAGS = ZO_PlayerInventoryBackpack
 local BANK = ZO_PlayerBankBackpack
 local GUILD_BANK = ZO_GuildBankBackpack
 
+local SKIN_CHOICES = { "Classic", "Rushmik" }
+
+local TEXTURES = {
+	["Classic"] = {
+		BACKGROUND = "InventoryGridView/assets/griditem_background.dds", --set to black?
+		OUTLINE = "InventoryGridView/assets/griditem_outline.dds",
+		HOVER = "InventoryGridView/assets/griditem_hover.dds"
+	},
+	["Rushmik"] = {
+		BACKGROUND = "InventoryGridView/assets/rushmik_background.dds",
+		OUTLINE = "InventoryGridView/assets/rushmik_outline.dds",
+		HOVER = "InventoryGridView/assets/rushmik_background.dds"
+	}
+}
+
 local QUALITY_OPTIONS = {
 	"Trash", "Normal", "Magic", "Arcane", "Artifact", "Legendary"
 }
@@ -77,12 +92,15 @@ function InventoryGridViewSettings:Initialize()
         isGuildBankGrid = true,
         allowRarityColor = true,
         gridSize = 52,
-        minimumQuality = "Trash"
+        minimumQuality = "Magic",
+        skinChoice = "Rushmik",
+        valueTooltip = true
     }
 
-    settings = ZO_SavedVars:New("InventoryGridView_Settings", 1, nil, defaults)
+    settings = ZO_SavedVars:New("InventoryGridView_Settings", 2, nil, defaults)
     self:CreateOptionsMenu()
 	InventoryGridView_SetMinimumQuality(QUALITY[settings.minimumQuality])
+	InventoryGridView_SetTextureSet(TEXTURES[settings.skinChoice])
 end
 
 function InventoryGridViewSettings:IsGrid( inventoryId )
@@ -113,9 +131,25 @@ function InventoryGridViewSettings:GetGridSize()
 	return settings.gridSize
 end
 
+function InventoryGridViewSettings:GetTextureSet()
+	return TEXTURES[settings.skinChoice]
+end
+
+function InventoryGridViewSettings:IsShowValueTooltip()
+	return settings.valueTooltip
+end
+
 function InventoryGridViewSettings:CreateOptionsMenu()
 	local panel = LAM:CreateControlPanel("InventoryGridViewSettingsPanel", "Inventory Grid View Settings")
 	LAM:AddHeader(panel, "IGV_Settings_header", "Inventory Grid View")
+	LAM:AddDropdown(panel, "IGV_Skin_Dropdown", "Skin", "Which skin would you like to use for Grid View?",
+					SKIN_CHOICES,
+					function() return settings.skinChoice end,
+					function(value)
+						settings.skinChoice = value
+						InventoryGridView_SetTextureSet(TEXTURES[value], true)
+					end)
+
 	LAM:AddCheckbox(panel, "IGV_Rarity_Outlines", "Rarity outlines", "Toggle the outlines on or off.",
 					function() return self:IsAllowOutline() end,	--getFunc
 					function()							--setFunc
@@ -124,6 +158,7 @@ function InventoryGridViewSettings:CreateOptionsMenu()
 						InventoryGridView_ToggleOutlines(BANK, settings.allowRarityColor)
 						InventoryGridView_ToggleOutlines(GUILD_BANK, settings.allowRarityColor)
 					end)
+
 	LAM:AddDropdown(panel, "IGV_Min_Rarity_Dropdown", "Minimum outline quality", "Don't show outlines under this quality",
 					QUALITY_OPTIONS,
 					function() return settings.minimumQuality end,	--getFunc
@@ -131,6 +166,7 @@ function InventoryGridViewSettings:CreateOptionsMenu()
 						settings.minimumQuality = value
 						InventoryGridView_SetMinimumQuality(QUALITY[value], true)
 					end)
+
 	local slider = LAM:AddSlider(panel, "IGV_Grid_Size", "Grid size", "Set how big or small the grid icons are.", 24, 96, 4,
 					function() return settings.gridSize end,
 					function(value)
@@ -149,5 +185,9 @@ function InventoryGridViewSettings:CreateOptionsMenu()
 			example:SetDimensions(value, value)
 		end)
 
+	LAM:AddCheckbox(panel, "IGV_Value_Tooltip", "Tooltip gold", "Should we add the stack's value to the tooltip in grid view?",
+					function() return settings.valueTooltip end,	--getFunc
+					function()							--setFunc
+						settings.valueTooltip = not settings.valueTooltip
+					end)
 end
-

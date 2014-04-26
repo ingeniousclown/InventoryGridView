@@ -1,7 +1,7 @@
 ------------------------------------------------------------------
 --InventoryGridView.lua
 --Author: ingeniousclown
---v1.0.2b
+--v1.1.0
 
 --InventoryGridView was designed to try and leverage the default
 --UI as much as possible to create a grid view.  The result is
@@ -52,7 +52,7 @@ local function AddGold(rowControl)
 end
 
 local function AddGoldSoon(rowControl)
-    if(rowControl.isGrid) then
+    if(rowControl.isGrid and IGVSettings:IsShowValueTooltip()) then
         zo_callLater(function() AddGold(rowControl) end, 50)
     end
 end

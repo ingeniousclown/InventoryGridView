@@ -1,6 +1,6 @@
 ## Title: Inventory Grid View
 ## Author: ingeniousclown
-## Version: 1.0.2b
+## Version: 1.1.0
 ## APIVersion: 100003
 ## SavedVariables: InventoryGridView_Settings
 ## OptionalDependsOn: LibAddonMenu-1.0

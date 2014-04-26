@@ -9,13 +9,13 @@
 --convert the list to grid view.
 ------------------------------------------------------------------
 
-local GRID_SLOT_BACKGROUND = "InventoryGridView/assets/griditem_outline.dds"
 local LIST_SLOT_BACKGROUND = [[EsoUI/Art/Miscellaneous/listItem_backdrop.dds]]
-local GRID_SLOT_HOVER = "InventoryGridView/assets/griditem_hover.dds"
 local LIST_SLOT_HOVER = [[EsoUI/Art/Miscellaneous/listitem_highlight.dds]]
 local ICON_MULT = 0.77
 
 local minimumQuality = ITEM_QUALITY_TRASH
+
+local TEXTURE_SET = nil
 
 -------------------------
 --my own util functions
@@ -41,7 +41,8 @@ local function AddColor(control)
         alpha = 0
     end
 
-    control:GetNamedChild("Bg"):SetColor(r, g, b, alpha)
+    control:GetNamedChild("Bg"):SetColor(r, g, b, 1)
+    control:GetNamedChild("Outline"):SetColor(r, g, b, alpha)
     control:GetNamedChild("Highlight"):SetColor(r, g, b, 0)
 end
 
@@ -67,11 +68,18 @@ local function ReshapeSlot(control, isGrid, isOutlines, width, height, forceUpda
         -- local sell = control:GetNamedChild("SellPrice")
         local highlight = control:GetNamedChild("Highlight")
         local research = control:GetNamedChild("Research")
+        local outline = control:GetNamedChild("Outline")
+        if(not outline) then
+            outline = WINDOW_MANAGER:CreateControl(control:GetName() .. "Outline", control, CT_TEXTURE)
+            outline:SetAnchor(CENTER, control, CENTER)
+        end
 
         button:ClearAnchors()
         new:ClearAnchors()
         control:SetDimensions(width, height)
         button:SetDimensions(height * ICON_MULT, height * ICON_MULT)
+        outline:SetDimensions(height, height)
+        
         if(isGrid) then
             button:SetAnchor(CENTER, control, CENTER)
 
@@ -80,24 +88,23 @@ local function ReshapeSlot(control, isGrid, isOutlines, width, height, forceUpda
 
             name:SetHidden(true)
             stat:SetHidden(true)
-            highlight:SetTexture(GRID_SLOT_HOVER)
+            highlight:SetTexture(TEXTURE_SET.HOVER)
             highlight:SetTextureCoords(0, 1, 0, 1)
 
+            bg:SetTexture(TEXTURE_SET.BACKGROUND)
+            bg:SetTextureCoords(0, 1, 0, 1)
+
             if(isOutlines) then
-                bg:SetTexture(GRID_SLOT_BACKGROUND)
-                bg:SetTextureCoords(0, 1, 0, 1)
-                AddColor(control)
+                outline:SetTexture(TEXTURE_SET.OUTLINE)
+                outline:SetHidden(false)
             else
-                bg:SetTexture(LIST_SLOT_BACKGROUND)
-                bg:SetTextureCoords(0, 1, 0, .8125)
-                bg:SetColor(1, 1, 1, 1)
+                outline:SetHidden(true)
             end
+            AddColor(control)
 
             if(research) then
                 research:SetHidden(true)
             end
-
-            --highlight:SetTexture(GRID_SLOT_HIGHLIGHT)
         else
             button:SetAnchor(CENTER, control, TOPLEFT, 47, 26)
 
@@ -105,6 +112,7 @@ local function ReshapeSlot(control, isGrid, isOutlines, width, height, forceUpda
 
             name:SetHidden(false)
             stat:SetHidden(false)
+            outline:SetHidden(true)
 
             highlight:SetTexture(LIST_SLOT_HOVER)
             highlight:SetColor(1, 1, 1, 0)
@@ -454,6 +462,16 @@ end
 
 function InventoryGridView_SetMinimumQuality(quality, forceUpdate)
     minimumQuality = quality
+    ZO_PlayerInventoryBackpack.forceUpdate = forceUpdate or false
+    ZO_PlayerBankBackpack.forceUpdate = forceUpdate or false
+    ZO_GuildBankBackpack.forceUpdate = forceUpdate or false
+    ReshapeSlots(ZO_PlayerInventoryBackpack)
+    ReshapeSlots(ZO_PlayerBankBackpack)
+    ReshapeSlots(ZO_GuildBankBackpack)
+end
+
+function InventoryGridView_SetTextureSet(textureSet, forceUpdate)
+    TEXTURE_SET = textureSet
     ZO_PlayerInventoryBackpack.forceUpdate = forceUpdate or false
     ZO_PlayerBankBackpack.forceUpdate = forceUpdate or false
     ZO_GuildBankBackpack.forceUpdate = forceUpdate or false
