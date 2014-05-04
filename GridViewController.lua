@@ -67,7 +67,7 @@ local function ReshapeSlot(control, isGrid, isOutlines, width, height, forceUpda
         local stat = control:GetNamedChild("StatValue")
         -- local sell = control:GetNamedChild("SellPrice")
         local highlight = control:GetNamedChild("Highlight")
-        local research = control:GetNamedChild("Research")
+        -- local research = control:GetNamedChild("Research")
         local outline = control:GetNamedChild("Outline")
         if(not outline) then
             outline = WINDOW_MANAGER:CreateControl(control:GetName() .. "Outline", control, CT_TEXTURE)
@@ -102,9 +102,9 @@ local function ReshapeSlot(control, isGrid, isOutlines, width, height, forceUpda
             end
             AddColor(control)
 
-            if(research) then
-                research:SetHidden(true)
-            end
+            -- if(research) then
+            --     research:SetHidden(true)
+            -- end
         else
             button:SetAnchor(CENTER, control, TOPLEFT, 47, 26)
 
