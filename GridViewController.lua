@@ -54,8 +54,8 @@ local function ReshapeSlot(control, isGrid, isOutlines, width, height, forceUpda
     --i pulled this out of the below part of the function because it wasn't
     --being hidden correctly.  My guess is that some other function unhides
     --the control
-    control:GetNamedChild("SellPrice"):SetHidden(isGrid)
 
+    control:GetNamedChild("SellPrice"):SetHidden(isGrid)
     if(control.isGrid ~= isGrid or forceUpdate) then
         control.isGrid = isGrid
         local thisName = control:GetName()
@@ -65,7 +65,7 @@ local function ReshapeSlot(control, isGrid, isOutlines, width, height, forceUpda
         local new = control:GetNamedChild("NewStatus")
         local name = control:GetNamedChild("Name")
         local stat = control:GetNamedChild("StatValue")
-        -- local sell = control:GetNamedChild("SellPrice")
+        local sell = control:GetNamedChild("SellPrice")
         local highlight = control:GetNamedChild("Highlight")
         -- local research = control:GetNamedChild("Research")
         local outline = control:GetNamedChild("Outline")
@@ -93,6 +93,7 @@ local function ReshapeSlot(control, isGrid, isOutlines, width, height, forceUpda
 
             bg:SetTexture(TEXTURE_SET.BACKGROUND)
             bg:SetTextureCoords(0, 1, 0, 1)
+            sell:SetAlpha(0)
 
             if(isOutlines) then
                 outline:SetTexture(TEXTURE_SET.OUTLINE)
@@ -121,6 +122,7 @@ local function ReshapeSlot(control, isGrid, isOutlines, width, height, forceUpda
             bg:SetTexture(LIST_SLOT_BACKGROUND)
             bg:SetTextureCoords(0, 1, 0, .8125)
             bg:SetColor(1, 1, 1, 1)
+            sell:SetAlpha(1)
         end
     end
 end
@@ -492,6 +494,19 @@ local function ScrollController(self)
 end
 
 --add necessary fields to the default UI's controls to facilitate the grid view
-function InitGridView()
+function InitGridView( isGrid )
     ZO_PreHook("ZO_ScrollList_UpdateScroll", ScrollController)
+
+    for _,v in pairs(PLAYER_INVENTORY.inventories) do
+        local listView = v.listView
+        if listView and listView.dataTypes and listView.dataTypes[1] then
+            local hookedFunctions = listView.dataTypes[1].setupCallback             
+            
+            listView.dataTypes[1].setupCallback = 
+                function(rowControl, slot)                      
+                    hookedFunctions(rowControl, slot)
+                    rowControl.isGrid = isGrid
+                end             
+        end
+    end
 end
