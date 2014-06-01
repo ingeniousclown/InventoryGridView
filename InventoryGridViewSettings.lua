@@ -8,18 +8,26 @@ local BAGS = ZO_PlayerInventoryBackpack
 local BANK = ZO_PlayerBankBackpack
 local GUILD_BANK = ZO_GuildBankBackpack
 
-local SKIN_CHOICES = { "Classic", "Rushmik" }
+local SKIN_CHOICES = { "Classic", "Rushmik", "Clean: by Tonyleila" }
 
 local TEXTURES = {
 	["Classic"] = {
 		BACKGROUND = "InventoryGridView/assets/griditem_background.dds", --set to black?
 		OUTLINE = "InventoryGridView/assets/griditem_outline.dds",
-		HOVER = "InventoryGridView/assets/griditem_hover.dds"
+		HOVER = "InventoryGridView/assets/griditem_hover.dds",
+		TOGGLE = "InventoryGridView/assets/grid_view_toggle_button.dds"
 	},
 	["Rushmik"] = {
 		BACKGROUND = "InventoryGridView/assets/rushmik_background.dds",
 		OUTLINE = "InventoryGridView/assets/rushmik_outline.dds",
-		HOVER = "InventoryGridView/assets/rushmik_background.dds"
+		HOVER = "InventoryGridView/assets/rushmik_background.dds",
+		TOGGLE = "InventoryGridView/assets/grid_view_toggle_button.dds"
+	},
+	["Clean: by Tonyleila"] = {
+		BACKGROUND = "InventoryGridView/assets/tonyleila_background.dds",
+		OUTLINE = "InventoryGridView/assets/tonyleila_outline.dds",
+		HOVER = "InventoryGridView/assets/tonyleila_hover.dds",
+		TOGGLE = "InventoryGridView/assets/tonyleila_toggle_button.dds"
 	}
 }
 
@@ -140,6 +148,34 @@ function InventoryGridViewSettings:IsShowValueTooltip()
 end
 
 function InventoryGridViewSettings:CreateOptionsMenu()
+	--example texture for skin and slider
+	local example = WINDOW_MANAGER:CreateControl("IGV_Grid_Size_Example_Texture", GuiRoot, CT_CONTROL)
+	example:SetMouseEnabled(true)
+
+	local ex_bg = WINDOW_MANAGER:CreateControl("IGV_Grid_Size_Example_Texture_BG", example, CT_TEXTURE)
+	ex_bg:SetAnchorFill(example)
+	ex_bg:SetTexture(self:GetTextureSet().BACKGROUND)
+
+	local ex_outline = WINDOW_MANAGER:CreateControl("IGV_Grid_Size_Example_Texture_Outline", example, CT_TEXTURE)
+	ex_outline:SetAnchorFill(example)
+	ex_outline:SetTexture(self:GetTextureSet().OUTLINE)
+	ex_outline:SetHidden(not self:IsAllowOutline())
+
+	local ex_hover = WINDOW_MANAGER:CreateControl("IGV_Grid_Size_Example_Texture_Hover", example, CT_TEXTURE)
+	ex_hover:SetAnchorFill(example)
+	ex_hover:SetTexture(self:GetTextureSet().HOVER)
+	ex_hover:SetHidden(true)
+
+	example:SetHandler("OnMouseEnter", 
+		function()
+			ex_hover:SetHidden(false)
+		end)
+	example:SetHandler("OnMouseExit", 
+		function()
+			ex_hover:SetHidden(true)
+		end)
+
+	--now actually set up the panel
 	local panel = LAM:CreateControlPanel("InventoryGridViewSettingsPanel", "Inventory Grid View Settings")
 	LAM:AddHeader(panel, "IGV_Settings_header", "Inventory Grid View")
 	LAM:AddDropdown(panel, "IGV_Skin_Dropdown", "Skin", "Which skin would you like to use for Grid View?",
@@ -148,6 +184,10 @@ function InventoryGridViewSettings:CreateOptionsMenu()
 					function(value)
 						settings.skinChoice = value
 						InventoryGridView_SetTextureSet(TEXTURES[value], true)
+						ex_bg:SetTexture(self:GetTextureSet().BACKGROUND)
+						ex_outline:SetTexture(self:GetTextureSet().OUTLINE)
+						ex_hover:SetTexture(self:GetTextureSet().HOVER)
+						InventoryGridView_SetToggleButtonTexture()
 					end)
 
 	LAM:AddCheckbox(panel, "IGV_Rarity_Outlines", "Rarity outlines", "Toggle the outlines on or off.",
@@ -157,6 +197,7 @@ function InventoryGridViewSettings:CreateOptionsMenu()
 						InventoryGridView_ToggleOutlines(BAGS, settings.allowRarityColor)
 						InventoryGridView_ToggleOutlines(BANK, settings.allowRarityColor)
 						InventoryGridView_ToggleOutlines(GUILD_BANK, settings.allowRarityColor)
+						ex_outline:SetHidden(not self:IsAllowOutline())
 					end)
 
 	LAM:AddDropdown(panel, "IGV_Min_Rarity_Dropdown", "Minimum outline quality", "Don't show outlines under this quality",
@@ -179,8 +220,6 @@ function InventoryGridViewSettings:CreateOptionsMenu()
 						InventoryGridView_ToggleOutlines(GUILD_BANK, settings.allowRarityColor)
 					end)
 
-	local example = WINDOW_MANAGER:CreateControl("IGV_Grid_Size_Example_Texture", GuiRoot, CT_TEXTURE)
-	example:SetTexture("InventoryGridView/assets/griditem_outline.dds")
 	LAMAddExample(panel, "IGV_Grid_Size_Example", example, 96, slider, function(value)
 			example:SetDimensions(value, value)
 		end)

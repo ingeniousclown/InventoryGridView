@@ -504,8 +504,8 @@ function InitGridView( isGrid )
             
             listView.dataTypes[1].setupCallback = 
                 function(rowControl, slot)                      
-                    hookedFunctions(rowControl, slot)
                     rowControl.isGrid = isGrid
+                    hookedFunctions(rowControl, slot)
                 end             
         end
     end

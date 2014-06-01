@@ -1,7 +1,7 @@
 ------------------------------------------------------------------
 --InventoryGridView.lua
 --Author: ingeniousclown
---v1.1.1
+--v1.1.2
 
 --InventoryGridView was designed to try and leverage the default
 --UI as much as possible to create a grid view.  The result is
@@ -15,7 +15,16 @@ local BANK = ZO_PlayerBankBackpack
 local GUILD_BANK = ZO_GuildBankBackpack
 
 local IGVSettings = nil
-local GRID_VIEW_BUTTON_TEXTURE = "InventoryGridView/assets/grid_view_toggle_button.dds"
+
+local toggleButtonTextures = {}
+
+local _
+
+function InventoryGridView_SetToggleButtonTexture()
+    for _,v in pairs(toggleButtonTextures) do
+        v:SetTexture(IGVSettings:GetTextureSet().TOGGLE)
+    end
+end
 
 local function ButtonClickHandler(button)
 	IGVSettings:ToggleGrid(button.inventoryId)
@@ -36,7 +45,9 @@ local function AddButton(parentWindow, inventoryId)
 
     local texture = WINDOW_MANAGER:CreateControl(parentWindow:GetName() .. "_GridButtonTexture", button, CT_TEXTURE)
     texture:SetAnchorFill()
-    texture:SetTexture(GRID_VIEW_BUTTON_TEXTURE)
+
+    table.insert(toggleButtonTextures, texture)
+
     -- texture:SetColor(1, 1, 1, 1)
 end
 
@@ -117,6 +128,7 @@ local function InventoryGridViewLoaded(eventCode, addOnName)
     AddButton(ZO_PlayerInventory, BAGS.bagId)
     AddButton(ZO_PlayerBank, BANK.bagId)
     AddButton(ZO_GuildBank, GUILD_BANK.bagId)    
+    InventoryGridView_SetToggleButtonTexture()
 
     ZO_PreHook("ZO_InventorySlot_OnMouseEnter", AddGoldSoon)
 end
