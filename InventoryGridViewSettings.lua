@@ -1,6 +1,6 @@
 
 
-local LAM = LibStub("LibAddonMenu-1.0")
+local LAM = LibStub("LibAddonMenu-2.0")
 InventoryGridViewSettings = ZO_Object:Subclass()
 local settings = nil
 
@@ -8,7 +8,7 @@ local BAGS = ZO_PlayerInventoryBackpack
 local BANK = ZO_PlayerBankBackpack
 local GUILD_BANK = ZO_GuildBankBackpack
 
-local SKIN_CHOICES = { "Classic", "Rushmik", "Clean: by Tonyleila" }
+local SKIN_CHOICES = { "Classic", "Rushmik", "Clean: by Tonyleila", "Circles: by Tonyleila" }
 
 local TEXTURES = {
 	["Classic"] = {
@@ -28,7 +28,13 @@ local TEXTURES = {
 		OUTLINE = "InventoryGridView/assets/tonyleila_outline.dds",
 		HOVER = "InventoryGridView/assets/tonyleila_hover.dds",
 		TOGGLE = "InventoryGridView/assets/tonyleila_toggle_button.dds"
-	}
+	},
+	["Circles: by Tonyleila"] = {
+		BACKGROUND = "InventoryGridView/assets/circle_background.dds",
+		OUTLINE = "InventoryGridView/assets/circle_outline.dds",
+		HOVER = "InventoryGridView/assets/circle_hover.dds",
+		TOGGLE = "InventoryGridView/assets/circle_toggle_button.dds"
+	},
 }
 
 local QUALITY_OPTIONS = {
@@ -43,48 +49,6 @@ local QUALITY = {
 	["Artifact"] = ITEM_QUALITY_ARTIFACT,
 	["Legendary"] = ITEM_QUALITY_LEGENDARY
 }
- 
---LAM extension
-local function LAMAddExample(panelID, controlName, ctTexture, maxHeight, sliderToBind, updateFunction, warning, warningText)
-	local example = WINDOW_MANAGER:CreateControl(controlName, ZO_OptionsWindowSettingsScrollChild, CT_CONTROL)
-	example:SetAnchor(TOPLEFT, LAM.lastAddedControl[panelID], BOTTOMLEFT, 0, 6)
-	example:SetAnchor(TOPRIGHT, LAM.lastAddedControl[panelID], BOTTOMRIGHT, 0, 6)
-	example:SetHeight(maxHeight + 4)
-	example.controlType = OPTIONS_EXAMPLE
-	example.system = SETTING_TYPE_UI
-	example.panel = panelID
-	-- example.text = text
-	-- example.tooltipText = tooltip
-	example.showValue = true
-
-	ctTexture:SetParent(example)
-	ctTexture:SetAnchor(CENTER, example, CENTER)
-
-	local sliderControl = sliderToBind:GetNamedChild("Slider")
-	local sliderValue = sliderToBind:GetNamedChild("ValueLabel")
-
-	example:SetHandler("OnShow", function()
-			updateFunction(sliderValue:GetText())
-		end)
-
-	local originalHandler = sliderControl:GetHandler("OnValueChanged")
-	sliderControl:SetHandler("OnValueChanged", function(self, value)
-			originalHandler(self, value)
-			updateFunction(sliderValue:GetText())
-		end)
-	
-	-- if warning then
-	-- 	example.warning = wm:CreateControlFromVirtual(controlName.."WarningIcon", example, "ZO_Options_WarningIcon")
-	-- 	example.warning:SetAnchor(RIGHT, slidercontrol, LEFT, -5, 0)
-	-- 	example.warning.tooltipText = warningText
-	-- end
-	
-	ZO_OptionsWindow_InitializeControl(example)
-	
-	LAM.lastAddedControl[panelID] = example
-	
-	return example
-end
 
 
 function InventoryGridViewSettings:New()
@@ -166,51 +130,80 @@ function InventoryGridViewSettings:CreateOptionsMenu()
 	ex_hover:SetTexture(self:GetTextureSet().HOVER)
 	ex_hover:SetHidden(true)
 
-	example:SetHandler("OnMouseEnter", 
-		function()
-			ex_hover:SetHidden(false)
-		end)
-	example:SetHandler("OnMouseExit", 
-		function()
-			ex_hover:SetHidden(true)
-		end)
+
+	local custom = {
+		type = "custom",
+		reference = "IGV_Grid_Size_Example"
+	}
 
 	--now actually set up the panel
-	local panel = LAM:CreateControlPanel("InventoryGridViewSettingsPanel", "Inventory Grid View Settings")
-	LAM:AddHeader(panel, "IGV_Settings_header", "Inventory Grid View")
-	LAM:AddDropdown(panel, "IGV_Skin_Dropdown", "Skin", "Which skin would you like to use for Grid View?",
-					SKIN_CHOICES,
-					function() return settings.skinChoice end,
-					function(value)
+	local panel = {
+		type = "panel",
+		name = "Inventory Grid View",
+		author = "ingeniousclown",
+		version = "1.1.3",
+		slashCommand = "/inventorygridview",
+		registerForRefresh = true
+	}
+
+	local optionsData = {
+		[1] = {
+			type = "dropdown",
+			name = "Skin",
+			tooltip = "Which skin would you like to use for Grid View?",
+			choices = SKIN_CHOICES,
+			getFunc = function() return settings.skinChoice end,
+			setFunc = function(value)
 						settings.skinChoice = value
 						InventoryGridView_SetTextureSet(TEXTURES[value], true)
 						ex_bg:SetTexture(self:GetTextureSet().BACKGROUND)
 						ex_outline:SetTexture(self:GetTextureSet().OUTLINE)
 						ex_hover:SetTexture(self:GetTextureSet().HOVER)
 						InventoryGridView_SetToggleButtonTexture()
-					end)
+					end,
+			reference = "IGV_Skin_Dropdown"
+		},
 
-	LAM:AddCheckbox(panel, "IGV_Rarity_Outlines", "Rarity outlines", "Toggle the outlines on or off.",
-					function() return self:IsAllowOutline() end,	--getFunc
-					function()							--setFunc
-						settings.allowRarityColor = not settings.allowRarityColor
+		[2] = {
+			type = "checkbox",
+			name = "Rarity outlines",
+			tooltip = "Toggle the outlines on or off.",
+			getFunc = function()
+						return self:IsAllowOutline() 
+					end,
+			setFunc = function(value)
+						settings.allowRarityColor = value
+						ex_outline:SetHidden(not self:IsAllowOutline())
 						InventoryGridView_ToggleOutlines(BAGS, settings.allowRarityColor)
 						InventoryGridView_ToggleOutlines(BANK, settings.allowRarityColor)
 						InventoryGridView_ToggleOutlines(GUILD_BANK, settings.allowRarityColor)
-						ex_outline:SetHidden(not self:IsAllowOutline())
-					end)
+					end,
+			reference = "IGV_Rarity_Outlines"
+		},
 
-	LAM:AddDropdown(panel, "IGV_Min_Rarity_Dropdown", "Minimum outline quality", "Don't show outlines under this quality",
-					QUALITY_OPTIONS,
-					function() return settings.minimumQuality end,	--getFunc
-					function(value)							--setFunc
+		[3] = {
+			type = "dropdown",
+			name = "Minimum outline quality",
+			tooltip = "Don't show outlines under this quality",
+			choices = QUALITY_OPTIONS,
+			getFunc = function() return settings.minimumQuality end,
+			setFunc = function(value)
 						settings.minimumQuality = value
 						InventoryGridView_SetMinimumQuality(QUALITY[value], true)
-					end)
+					end,
+			disabled = function() return not self:IsAllowOutline() end,
+			reference = "IGV_Min_Rarity_Dropdown"
+		},
 
-	local slider = LAM:AddSlider(panel, "IGV_Grid_Size", "Grid size", "Set how big or small the grid icons are.", 24, 96, 4,
-					function() return settings.gridSize end,
-					function(value)
+		[4] = {
+			type = "slider",
+			name = "Grid size",
+			tooltip = "Set how big or small the grid icons are.",
+			min = 24,
+			max = 96,
+			step = 4,
+			getFunc = function() return settings.gridSize end,
+			setFunc = function(value)
 						settings.gridSize = value
 						BAGS.gridSize = value
 						BANK.gridSize = value
@@ -218,15 +211,50 @@ function InventoryGridViewSettings:CreateOptionsMenu()
 						InventoryGridView_ToggleOutlines(BAGS, settings.allowRarityColor)
 						InventoryGridView_ToggleOutlines(BANK, settings.allowRarityColor)
 						InventoryGridView_ToggleOutlines(GUILD_BANK, settings.allowRarityColor)
-					end)
+						example:SetDimensions(value, value)
+					end,
+			reference = "IGV_Grid_Size"
+		},
 
-	LAMAddExample(panel, "IGV_Grid_Size_Example", example, 96, slider, function(value)
-			example:SetDimensions(value, value)
+		[5] = custom,
+
+		[6] = {
+			type = "checkbox",
+			name = "Tooltip gold",
+			tooltip = "Should we add the stack's value to the tooltip in grid view?",
+			getFunc = function() return settings.valueTooltip end,
+			setFunc = function(value)
+						settings.valueTooltip = value
+					end,
+			reference = "IGV_Value_Tooltip"
+		},
+	}
+
+	LAM:RegisterAddonPanel("InventoryGridViewSettingsPanel", panel)
+	LAM:RegisterOptionControls("InventoryGridViewSettingsPanel", optionsData)
+
+	CALLBACK_MANAGER:RegisterCallback("LAM-PanelControlsCreated",
+		function()
+			example:SetParent(IGV_Grid_Size_Example)
+			example:SetDimensions(settings.gridSize, settings.gridSize)
+			example:SetAnchor(CENTER, IGV_Grid_Size_Example, CENTER)
+			example:SetHandler("OnMouseEnter", 
+				function()
+					ex_hover:SetHidden(false)
+				end)
+			example:SetHandler("OnMouseExit", 
+				function()
+					ex_hover:SetHidden(true)
+				end)
 		end)
+end
 
-	LAM:AddCheckbox(panel, "IGV_Value_Tooltip", "Tooltip gold", "Should we add the stack's value to the tooltip in grid view?",
-					function() return settings.valueTooltip end,	--getFunc
-					function()							--setFunc
-						settings.valueTooltip = not settings.valueTooltip
-					end)
+function InventoryGridView_RegisterSkin( name, background, outline, highlight, toggle )
+	table.insert(SKIN_CHOICES, name)
+	TEXTURES[name] = {
+		BACKGROUND = background or "InventoryGridView/assets/griditem_background.dds",
+		OUTLINE = outline or "InventoryGridView/assets/griditem_outline.dds",
+		HOVER = highlight or "InventoryGridView/assets/griditem_hover.dds",
+		TOGGLE = toggle or "InventoryGridView/assets/grid_view_toggle_button.dds"
+	}
 end
